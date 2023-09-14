@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongoapp
+  namespace: test-ns
+spec:
+  serviceName: mongosvc
+  replicas: 4
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: monogoapp
+          image: mongo
+          command:
+            - "mongod"
+            - "--bind_ip"
+            - "0.0.0.0"
+            - "--replSet"
+            - "MainRepSet"
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongovol
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: 300m
+              memory: 156Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: mongovol
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongosvc
+  namespace: test-ns
+spec:
+  cslusterIP: None
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springpod
+  namespace: test-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springapp
+  template:
+    metadata:
+      labels:
+        app: springapp
+    spec:
+      containers:
+        - name: springpod
+          image: doh1/spring-boot-app:1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_DB_USERNAME
+              value: doh
+            - name: MONGO_DB_PASSWORD
+              value: doh1
+            - name: MONGO_DB_HOSTNAME
+              value: mongosvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springsvc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: springapp
+
+================================================================
+rs.initiate( { _id: "MainRepSet", version: 1,
+members: [
+  { _id: 0, host: "mongoapp-0.mongosvc.test-ns.svc.cluster.local:27017" },
+  { _id: 1, host: "mongoapp-1.mongosvc.test-ns.svc.cluster.local:27017" },
+  { _id: 2, host: "mongoapp-2.mongosvc.test-ns.svc.cluster.local:27017" } ] } );
+===================================================================================
+db:users:find():
+db:COLLECTION_NAME:find(condition):

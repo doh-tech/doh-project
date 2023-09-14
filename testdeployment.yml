@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springappdeploymeent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springapp
+  template:
+    metadata:
+      labels:
+        app: springapp
+    spec:
+      containers:
+        - name: containerapp
+          image: doh1/doh-spring-boot-app:2
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_DB_USERNAME
+                value: doh1
+            - name: MONGO_DB_PASSWORD
+              value: mongo
+            - name: MONGO_DB_HOSTNAME
+              value:  mongodb-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springappsvc
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: springapp

@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: javawebapp
+spec:
+  template:
+    metadata:
+      labels:
+        app: javawebapp
+    spec:
+      containers:
+        - name: javawebapp
+          image: doh1/java-web-app:1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 2
+              memory: 2Mi
+            limits:
+              cpu: 2
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:javawebappsvc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: javawebapp

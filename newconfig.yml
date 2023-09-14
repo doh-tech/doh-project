@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongoconfig
+data:
+  tomcat-users.xml:
+  <?xml version='1.0' encoding='utf-8'?>
+  <tomcat-users>
+  <user username="doh" password="doh1" roles="manager-gui"/>
+  <user username="doh" password="doh2" roles="manager-gui"/>
+  </tomcat-users>

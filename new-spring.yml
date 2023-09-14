@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javadeployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javaapp
+  template:
+    metadata:
+      labels:
+        app: javaapp
+    spec:
+      containers:
+        - name: javacontainer
+          image: doh1/doh-spring-boot-app:2
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_DB_HOSTNAME
+              value: mongo
+            - name: MONGO_DB_PASSWORD
+              value: doh1
+            - name: MONGO_DB_USERNAME
+              value: doh
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: javasvc
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: javaapp
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mongoapp
+  template:
+    metadata:
+      labels:
+        name: mongoapp
+    spec:
+      containers:
+        - name: mongocontainer
+          image: mongo
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mongoconfigmap
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongosecret
+                  key: password
+          volumeMounts:
+            - name: mongovol
+              mountPath: /data/db
+      volumes:
+        - name: mongovol
+          persistentVolumeClaim:
+            claimName: mongopvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    name: mongoapp
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongopvc
+spec:
+  storageClassName: nfs-storageclass
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

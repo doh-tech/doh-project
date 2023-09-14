@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: newpvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: javars
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: javaapp
+  template:
+    metadata:
+      labels:
+        app: javaapp
+    spec:
+      containers:
+        - name: javars
+          image: mongo
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: doh
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: doh1
+          volumeMounts:
+            - name: mongovol
+              mountPath: /data/db
+      volumes:
+        - name: mongovol
+          persistentVolumeClaim:
+            newpvc

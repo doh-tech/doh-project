@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mavencontainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maven
+  template:
+    metadata:
+      labels:
+        app: maven
+    spec:
+      nodeSelector:
+        name: one2
+      containers:
+        - name: mavencontainer
+          image: doh1/maven-web-app:1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 2
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mavensvc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: maven

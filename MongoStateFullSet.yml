@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongostatefull
+spec:
+  serviceName: mongostatesvc
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongostate
+  template:
+    metadata:
+      labels:
+        app: mongostate
+    spec:
+      containers:
+        - name: mongostatefull
+          image: mongo
+          command:
+            - "mongod"
+            - "--bind_ip"
+            - "0.0.0.0"
+            - "--replSet"
+            - "MainRepSet"
+          ports:
+            - containerPort: 27017
+          resources:
+            requests:
+              cpu: 200m
+              memory: 128Mi
+            limits:
+              cpu: 400m
+              memory: 256Mi
+          volumeMounts:
+            - name: mongovol
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+       name: mongovol
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name:  mongostatesvc
+spec:
+  clusterIP: None
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongostate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springapp
+  namespace: test-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springapptest
+  template:
+    metadata:
+      labels:
+        app: springapptest
+    spec:
+      containers:
+        - name: springpod
+          image: doh1/spring-boot-app:1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_DB_USERNAME
+              value: doh
+            - name: MONGO_DB_PASSWORD
+              value: doh1
+            - name: MONGO_DB_HOSTNAME
+              value: mongostatesvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springappsvc
+  namespace: test-ns
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: springapptest
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

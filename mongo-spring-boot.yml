@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springappdeploymeent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springapp
+  template:
+    metadata:
+      labels:
+        app: springapp
+    spec:
+      containers:
+        - name: containerapp
+          image: doh1/doh-spring-boot-app:2
+          ports:
+            - containerPort: 8080
+          env:
+          - name: MONGO_DB_USERNAME
+             value: doh1
+          - name: MONGO_DB_PASSWORD
+            value: mongo
+          - name: MONGO_DB_HOSTNAME
+            value: doh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springappsvc
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: springapp
+---
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: mongo
+spec:
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: containermongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: doh
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: doh1
+          volumeMounts:
+            - name: mongovol
+              mountPath: /data/db
+      volumes:
+        - name: mongovol
+          hostPath:
+            path: /mongodata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: 27017
+  selector:
+    app: mongo

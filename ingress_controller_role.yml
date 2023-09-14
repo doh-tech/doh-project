@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingressrule
+  namespace:  nginx-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mavenapp.doh1cloud.click
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: mavensvchpa
+                port:
+                  number: 80
+
+#=============================================================================================
+
+  Deploy Nginx Ingress Controller
+  -------------------------------
+
+Offical WebSite: https://docs.nginx.com/nginx-ingress-controller/intro/overview/
+  
+  git clone https://github.com/MithunTechnologiesDevOps/kubernetes-ingress.git
+  
+  cd kubernetes-ingress/deployments
+  
+  # Create a Namespace And SA 
+  kubectl apply -f common/ns-and-sa.yaml
+  
+  # Create RBAC, Default Secret And Config Map
+  kubectl apply -f common/
+  
+  # Deploy the Ingress Controller
+  
+  kubectl apply -f daemon-set/nginx-ingress.yaml
+  
+  # Check that the Ingress Controller is Running
+  
+  kubectl get pods --namespace=nginx-ingress
+  
+  # Create Service with the Type LoadBalancer for ingress controller
+  
+  kubectl apply -f service/loadbalancer-aws-elb.yaml
